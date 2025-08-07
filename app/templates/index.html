@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaf Disease Detector</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0eafc, #cfdef3 80%);
+            color: #222;
+            font-family: 'Roboto', Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: rgba(255,255,255,0.85);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 48px 36px 36px 36px;
+            max-width: 420px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.3rem;
+            margin-bottom: 18px;
+            letter-spacing: 2px;
+            color: #185a9d;
+        }
+        .upload-section {
+            margin-bottom: 24px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label.upload-btn {
+            background: linear-gradient(90deg, #43cea2, #185a9d);
+            color: #fff;
+            padding: 13px 32px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin-bottom: 18px;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        label.upload-btn:hover {
+            background: linear-gradient(90deg, #185a9d, #43cea2);
+        }
+        .analyze-btn {
+            background: #185a9d;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 32px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .analyze-btn:hover {
+            background: #43cea2;
+            color: #185a9d;
+        }
+        .result {
+            margin-top: 32px;
+            padding: 24px 18px;
+            background: #f6fff8;
+            border-radius: 18px;
+            box-shadow: 0 2px 12px 0 rgba(67, 206, 162, 0.08);
+            font-size: 1.1rem;
+            display: none;
+        }
+        .result.visible {
+            display: block;
+        }
+        .disease-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .crop {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #185a9d;
+        }
+        .disease {
+            font-size: 1.1rem;
+            color: #43cea2;
+            margin-bottom: 8px;
+        }
+        .recommendation-box {
+            margin-top: 16px;
+            background: linear-gradient(90deg, #43cea2 60%, #185a9d 100%);
+            color: #fff;
+            border-radius: 12px;
+            padding: 14px 10px;
+            font-size: 1.08rem;
+            font-weight: 500;
+            box-shadow: 0 2px 8px 0 rgba(24, 90, 157, 0.08);
+        }
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-leaf"></i> Leaf Disease Detector</h1>
+        <form id="uploadForm" class="upload-section">
+            <input type="file" id="fileInput" name="file" accept="image/*" required>
+            <label for="fileInput" class="upload-btn"><i class="fas fa-upload"></i> Choose Leaf Image</label>
+            <br>
+            <button type="submit" class="analyze-btn"><i class="fas fa-microscope"></i> Analyze</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+    <div class="footer">&copy; 2024 Smart Agri AI | Crop Health &amp; Disease Detection</div>
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const resultDiv = document.getElementById('result');
+        const diseaseIcons = {
+            'Apple__Black_rot': '<i class="fas fa-apple-alt"></i>',
+            'Apple__Cedar_apple_rust': '<i class="fas fa-apple-alt"></i>',
+            'Apple__healthy': '<i class="fas fa-apple-alt"></i>',
+            'Cherry___Powdery_mildew': '<i class="fas fa-chess-queen"></i>',
+            'Cherry___healthy': '<i class="fas fa-chess-queen"></i>',
+            'Corn__Cercospora_leaf_spot Gray_leaf_spot': '<i class="fas fa-seedling"></i>',
+            'Corn__Common_rust': '<i class="fas fa-seedling"></i>',
+            'Corn__healthy': '<i class="fas fa-seedling"></i>',
+            'Corn__Northern_Leaf_Blight': '<i class="fas fa-seedling"></i>',
+            'Grape__Black_rot': '<i class="fas fa-wine-bottle"></i>',
+            'Grape__Esca_(Black_Measles)': '<i class="fas fa-wine-bottle"></i>',
+            'Grape__healthy': '<i class="fas fa-wine-bottle"></i>',
+            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': '<i class="fas fa-wine-bottle"></i>',
+            'Peach___Bacterial_spot': '<i class="fas fa-peach"></i>',
+            'Peach___healthy': '<i class="fas fa-peach"></i>'
+        };
+        const cropNames = {
+            'Apple__Black_rot': 'Apple',
+            'Apple__Cedar_apple_rust': 'Apple',
+            'Apple__healthy': 'Apple',
+            'Cherry___Powdery_mildew': 'Cherry',
+            'Cherry___healthy': 'Cherry',
+            'Corn__Cercospora_leaf_spot Gray_leaf_spot': 'Corn',
+            'Corn__Common_rust': 'Corn',
+            'Corn__healthy': 'Corn',
+            'Corn__Northern_Leaf_Blight': 'Corn',
+            'Grape__Black_rot': 'Grape',
+            'Grape__Esca_(Black_Measles)': 'Grape',
+            'Grape__healthy': 'Grape',
+            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': 'Grape',
+            'Peach___Bacterial_spot': 'Peach',
+            'Peach___healthy': 'Peach'
+        };
+        const diseaseNames = {
+            'Apple__Black_rot': 'Black Rot',
+            'Apple__Cedar_apple_rust': 'Cedar Apple Rust',
+            'Apple__healthy': 'Healthy',
+            'Cherry___Powdery_mildew': 'Powdery Mildew',
+            'Cherry___healthy': 'Healthy',
+            'Corn__Cercospora_leaf_spot Gray_leaf_spot': 'Cercospora Leaf Spot',
+            'Corn__Common_rust': 'Common Rust',
+            'Corn__healthy': 'Healthy',
+            'Corn__Northern_Leaf_Blight': 'Northern Leaf Blight',
+            'Grape__Black_rot': 'Black Rot',
+            'Grape__Esca_(Black_Measles)': 'Esca (Black Measles)',
+            'Grape__healthy': 'Healthy',
+            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': 'Leaf Blight',
+            'Peach___Bacterial_spot': 'Bacterial Spot',
+            'Peach___healthy': 'Healthy'
+        };
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an image file first.');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show loading state
+            resultDiv.classList.remove('visible');
+            resultDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #185a9d;"></i><br><br>Analyzing your image...</div>';
+            resultDiv.style.display = 'block';
+            
+            try {
+                console.log('Sending request to /api/predict...');
+                const res = await fetch('/api/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response status:', res.status);
+                const data = await res.json();
+                console.log('Response data:', data);
+                
+                if (res.ok && data.success && data.prediction) {
+                    const pred = data.prediction.trim();
+                    console.log('Prediction:', pred);
+                    const icon = diseaseIcons[pred] || '<i class="fas fa-leaf"></i>';
+                    const crop = cropNames[pred] || 'Unknown Crop';
+                    const disease = diseaseNames[pred] || pred;
+                    
+                    resultDiv.innerHTML = `
+                        <div class='disease-icon'>${icon}</div>
+                        <div class='crop'>${crop}</div>
+                        <div class='disease'>${disease}</div>
+                        <div class='recommendation-box'>${data.recommendation}</div>
+                    `;
+                } else {
+                    const errorMsg = data.error || 'An unexpected error occurred during prediction.';
+                    console.error('API Error:', errorMsg);
+                    resultDiv.innerHTML = `<div style="text-align: center; color: #ff6f61; padding: 20px;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i><br><br>${errorMsg}</div>`;
+                }
+                resultDiv.classList.add('visible');
+            } catch (err) {
+                console.error('Network error:', err);
+                resultDiv.innerHTML = `<div style="text-align: center; color: #ff6f61; padding: 20px;"><i class="fas fa-exclamation-triangle" style="font-size: 2rem;"></i><br><br>Network error: ${err.message}</div>`;
+                resultDiv.classList.add('visible');
+            }
+        };
+        document.querySelector('label.upload-btn').onclick = () => fileInput.click();
+    </script>
+</body>
+</html>
