@@ -130,57 +130,61 @@
         const form = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');
         const resultDiv = document.getElementById('result');
-        const diseaseIcons = {
-            'Apple__Black_rot': '<i class="fas fa-apple-alt"></i>',
-            'Apple__Cedar_apple_rust': '<i class="fas fa-apple-alt"></i>',
-            'Apple__healthy': '<i class="fas fa-apple-alt"></i>',
-            'Cherry___Powdery_mildew': '<i class="fas fa-chess-queen"></i>',
-            'Cherry___healthy': '<i class="fas fa-chess-queen"></i>',
-            'Corn__Cercospora_leaf_spot Gray_leaf_spot': '<i class="fas fa-seedling"></i>',
-            'Corn__Common_rust': '<i class="fas fa-seedling"></i>',
-            'Corn__healthy': '<i class="fas fa-seedling"></i>',
-            'Corn__Northern_Leaf_Blight': '<i class="fas fa-seedling"></i>',
-            'Grape__Black_rot': '<i class="fas fa-wine-bottle"></i>',
-            'Grape__Esca_(Black_Measles)': '<i class="fas fa-wine-bottle"></i>',
-            'Grape__healthy': '<i class="fas fa-wine-bottle"></i>',
-            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': '<i class="fas fa-wine-bottle"></i>',
-            'Peach___Bacterial_spot': '<i class="fas fa-peach"></i>',
-            'Peach___healthy': '<i class="fas fa-peach"></i>'
-        };
-        const cropNames = {
-            'Apple__Black_rot': 'Apple',
-            'Apple__Cedar_apple_rust': 'Apple',
-            'Apple__healthy': 'Apple',
-            'Cherry___Powdery_mildew': 'Cherry',
-            'Cherry___healthy': 'Cherry',
-            'Corn__Cercospora_leaf_spot Gray_leaf_spot': 'Corn',
-            'Corn__Common_rust': 'Corn',
-            'Corn__healthy': 'Corn',
-            'Corn__Northern_Leaf_Blight': 'Corn',
-            'Grape__Black_rot': 'Grape',
-            'Grape__Esca_(Black_Measles)': 'Grape',
-            'Grape__healthy': 'Grape',
-            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': 'Grape',
-            'Peach___Bacterial_spot': 'Peach',
-            'Peach___healthy': 'Peach'
-        };
-        const diseaseNames = {
-            'Apple__Black_rot': 'Black Rot',
-            'Apple__Cedar_apple_rust': 'Cedar Apple Rust',
-            'Apple__healthy': 'Healthy',
-            'Cherry___Powdery_mildew': 'Powdery Mildew',
-            'Cherry___healthy': 'Healthy',
-            'Corn__Cercospora_leaf_spot Gray_leaf_spot': 'Cercospora Leaf Spot',
-            'Corn__Common_rust': 'Common Rust',
-            'Corn__healthy': 'Healthy',
-            'Corn__Northern_Leaf_Blight': 'Northern Leaf Blight',
-            'Grape__Black_rot': 'Black Rot',
-            'Grape__Esca_(Black_Measles)': 'Esca (Black Measles)',
-            'Grape__healthy': 'Healthy',
-            'Grape__Leaf_blight_(Isariopsis_Leaf_Spot)': 'Leaf Blight',
-            'Peach___Bacterial_spot': 'Bacterial Spot',
-            'Peach___healthy': 'Healthy'
-        };
+        // Dynamic class labels from the model
+        const classLabels = {{ class_labels | tojson | safe }};
+        
+        // Generate dynamic mappings based on class labels
+        const diseaseIcons = {};
+        const cropNames = {};
+        const diseaseNames = {};
+        
+        classLabels.forEach(label => {
+            const labelLower = label.toLowerCase();
+            
+            // Set icons based on crop type
+            if (labelLower.includes('apple')) {
+                diseaseIcons[label] = '<i class="fas fa-apple-alt"></i>';
+            } else if (labelLower.includes('cherry')) {
+                diseaseIcons[label] = '<i class="fas fa-chess-queen"></i>';
+            } else if (labelLower.includes('corn')) {
+                diseaseIcons[label] = '<i class="fas fa-seedling"></i>';
+            } else if (labelLower.includes('grape')) {
+                diseaseIcons[label] = '<i class="fas fa-wine-bottle"></i>';
+            } else if (labelLower.includes('peach')) {
+                diseaseIcons[label] = '<i class="fas fa-peach"></i>';
+            } else {
+                diseaseIcons[label] = '<i class="fas fa-leaf"></i>';
+            }
+            
+            // Set crop names
+            if (labelLower.includes('apple')) {
+                cropNames[label] = 'Apple';
+            } else if (labelLower.includes('cherry')) {
+                cropNames[label] = 'Cherry';
+            } else if (labelLower.includes('corn')) {
+                cropNames[label] = 'Corn';
+            } else if (labelLower.includes('grape')) {
+                cropNames[label] = 'Grape';
+            } else if (labelLower.includes('peach')) {
+                cropNames[label] = 'Peach';
+            } else {
+                cropNames[label] = 'Plant';
+            }
+            
+            // Set disease names (clean up the label)
+            if (labelLower.includes('healthy')) {
+                diseaseNames[label] = 'Healthy';
+            } else {
+                // Remove crop prefix and clean up disease name
+                let diseaseName = label;
+                if (label.includes('__')) {
+                    diseaseName = label.split('__')[1];
+                }
+                // Replace underscores with spaces and capitalize
+                diseaseName = diseaseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                diseaseNames[label] = diseaseName;
+            }
+        });
         form.onsubmit = async (e) => {
             e.preventDefault();
             const file = fileInput.files[0];

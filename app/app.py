@@ -19,7 +19,16 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    # Get class labels from the model
+    try:
+        from predict import class_labels
+        # Ensure class_labels is a list and not None
+        if class_labels is None:
+            class_labels = []
+        return render_template('index.html', class_labels=class_labels)
+    except Exception as e:
+        print(f"Error getting class labels: {e}")
+        return render_template('index.html', class_labels=[])
 
 @app.route('/api/predict', methods=['POST'])
 def api_predict():
